@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  ehrbase-postgres:
+    image: ehrbase/ehrbase-v2-postgres:16.2
+    container_name: ehrbase-postgres
+    environment:
+      POSTGRES_USER: postgres
+      PASSWORD: postgres
+      EHRBASE_USER: ehrbase_restricted
+      EHRBASE_PASSWORD: ehrbase_restricted
+      EHRBASE_USER_ADMIN: ehrbase
+      EHRBASE_PASSWORD_ADMIN: ehrbase
+    ports:
+      - "5432:5432"
+    networks:
+      - ehrbase-net
+
+  ehrbase:
+    image: ehrbase/ehrbase:latest
+    container_name: ehrbase
+    environment:
+      DB_URL: jdbc:postgresql://ehrbase-postgres:5432/ehrbase
+      DB_USER: ehrbase_restricted
+      DB_PASS: ehrbase_restricted
+      DB_USER_ADMIN: ehrbase
+      DB_PASS_ADMIN: ehrbase
+      SERVER_NODENAME: local.ehrbase.org
+      SPRING_PROFILES_ACTIVE: local
+      SECURITY_AUTHTYPE: OAUTH
+      # SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUERURI: https://frosty-carson-f764ygzrmv.projects.oryapis.com
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUERURI: https://auth.docdoc.com.au
+      # SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKSETURI: https://frosty-carson-f764ygzrmv.projects.oryapis.com/.well-known/jwks.json
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKSETURI: https://auth.docdoc.com.au
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUTHORITIESCLAIMNAME: roles
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUTHORITYPREFIX:
+      SECURITY_OAUTH2USERROLE: USER
+      SECURITY_OAUTH2ADMINROLE: ADMIN
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE: env,health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_BASEPATH: /management
+      MANAGEMENT_ENDPOINT_ENV_ENABLED: false
+      MANAGEMENT_ENDPOINT_HEALTH_DATASOURCE_ENABLED: false
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: DEBUG
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ehrbase-postgres
+    networks:
+      - ehrbase-net
+
+networks:
+  ehrbase-net:
+    driver: bridge
+
+    #      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUTHORITIESCLAIMNAME: $.ext.roles
+    #      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUTHORITIESCLAIMNAME: scp
+    #      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUTHORITYPREFIX: SCOPE_
